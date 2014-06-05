@@ -15,7 +15,8 @@
   // setup the audio context
   var ctx = null,
     usingWebAudio = true,
-    noAudio = false;
+    noAudio = false,
+    unlocked = false;
   try {
     if (typeof AudioContext !== 'undefined') {
       ctx = new AudioContext();
@@ -109,6 +110,29 @@
       this._setMuted(false);
 
       return this;
+    },
+
+    /**
+     * Use like: onclick=function() { Howler.unlock() }
+     * See http://paulbakaus.com/tutorials/html5/web-audio-on-ios/
+     * Copy pasta with sauce.
+     */
+    unlock: function() {
+      if (usingWebAudio && ctx && !unlocked) {
+        // create empty buffer and play it
+        var buffer = ctx.createBuffer(1, 1, 22050);
+        var source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.noteOn(0);
+
+        // by checking the play state after some time, we know if we're really unlocked
+        setTimeout(function() {
+           if((source.playbackState === source.PLAYING_STATE || source.playbackState === source.FINISHED_STATE)) {
+             unlocked = true;
+           }
+        }, 0);
+      }
     },
 
     /**
